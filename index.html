@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบเช็คของก่อนซื้อ - Restaurant App</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #fdf2f8; /* Soft pink background like the image */
+            background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
+            background-size: 20px 20px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- Icons ---
+        const TrashIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        );
+
+        const PlusIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const CheckIcon = ({ checked }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 ${checked ? 'text-white' : 'text-transparent'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+
+        // --- Default Data matching the uploaded images ---
+        const defaultCategories = [
+            {
+                id: 'cat-1', 
+                name: '1. ผัก / ของสด', 
+                icon: '🥬',
+                theme: 'bg-green-100 border-green-500 text-green-800',
+                headerTheme: 'bg-green-500 text-white',
+                items: [
+                    { id: '1-1', name: 'ต้นหอม', left: '', need: '', note: '', bought: false },
+                    { id: '1-2', name: 'พริกใหญ่', left: '', need: '', note: '', bought: false },
+                    { id: '1-3', name: 'มะนาว', left: '', need: '', note: '', bought: false },
+                    { id: '1-4', name: 'ผักชี', left: '', need: '', note: '', bought: false },
+                    { id: '1-5', name: 'คะน้า', left: '', need: '', note: '', bought: false },
+                    { id: '1-6', name: 'ถั่วงอก', left: '', need: '', note: '', bought: false },
+                ]
+            },
+            {
+                id: 'cat-2', 
+                name: '2. เส้น / บะหมี่ / เครื่องก๋วยเตี๋ยว', 
+                icon: '🍜',
+                theme: 'bg-orange-100 border-orange-400 text-orange-800',
+                headerTheme: 'bg-orange-400 text-white',
+                items: [
+                    { id: '2-1', name: 'บะหมี่หยก', left: '', need: '', note: '', bought: false },
+                    { id: '2-2', name: 'บะหมี่เหลือง', left: '', need: '', note: '', bought: false },
+                    { id: '2-3', name: 'เส้นเล็ก', left: '', need: '', note: '', bought: false },
+                    { id: '2-4', name: 'เกี๊ยวแผ่น', left: '', need: '', note: '', bought: false },
+                    { id: '2-5', name: 'ลูกชิ้นหมู', left: '', need: '', note: '', bought: false },
+                ]
+            },
+            {
+                id: 'cat-3', 
+                name: '3. เครื่องปรุง / ของแห้ง', 
+                icon: '🧂',
+                theme: 'bg-red-100 border-red-400 text-red-800',
+                headerTheme: 'bg-red-400 text-white',
+                items: [
+                    { id: '3-1', name: 'ตั้งฉ่าย', left: '', need: '', note: '', bought: false },
+                    { id: '3-2', name: 'กระเทียมเจียว', left: '', need: '', note: '', bought: false },
+                    { id: '3-3', name: 'น้ำตาล', left: '', need: '', note: '', bought: false },
+                    { id: '3-4', name: 'น้ำมันพืช', left: '', need: '', note: '', bought: false },
+                    { id: '3-5', name: 'ซีอิ๊วดำ / ขาว', left: '', need: '', note: '', bought: false },
+                ]
+            },
+            {
+                id: 'cat-4', 
+                name: '4. หมู / เนื้อสัตว์', 
+                icon: '🥩',
+                theme: 'bg-blue-100 border-blue-400 text-blue-800',
+                headerTheme: 'bg-blue-400 text-white',
+                items: [
+                    { id: '4-1', name: 'หมูสับ', left: '', need: '', note: '', bought: false },
+                    { id: '4-2', name: 'ไข่ไก่', left: '', need: '', note: '', bought: false },
+                    { id: '4-3', name: 'หมูแดง', left: '', need: '', note: '', bought: false },
+                ]
+            },
+            {
+                id: 'cat-5', 
+                name: '5. ภาชนะ / บรรจุภัณฑ์', 
+                icon: '📦',
+                theme: 'bg-pink-100 border-pink-400 text-pink-800',
+                headerTheme: 'bg-pink-400 text-white',
+                items: [
+                    { id: '5-1', name: 'กล่องข้าว', left: '', need: '', note: '', bought: false },
+                    { id: '5-2', name: 'ถุง 8 x 15', left: '', need: '', note: '', bought: false },
+                    { id: '5-3', name: 'ตะเกียบ', left: '', need: '', note: '', bought: false },
+                    { id: '5-4', name: 'หนังยาง', left: '', need: '', note: '', bought: false },
+                ]
+            }
+        ];
+
+        const defaultMeta = {
+            date: new Date().toISOString().split('T')[0],
+            checker: '',
+            buyer: '',
+            totalCost: '',
+            shopName: '',
+            payerName: '',
+            change: ''
+        };
+
+        const App = () => {
+            // --- State Management ---
+            const [categories, setCategories] = React.useState(() => {
+                const saved = localStorage.getItem('restaurantChecklist');
+                return saved ? JSON.parse(saved) : defaultCategories;
+            });
+
+            const [meta, setMeta] = React.useState(() => {
+                const savedMeta = localStorage.getItem('restaurantMeta');
+                return savedMeta ? JSON.parse(savedMeta) : defaultMeta;
+            });
+
+            // Save to LocalStorage automatically
+            React.useEffect(() => {
+                localStorage.setItem('restaurantChecklist', JSON.stringify(categories));
+                localStorage.setItem('restaurantMeta', JSON.stringify(meta));
+            }, [categories, meta]);
+
+            // --- Handlers ---
+            const handleMetaChange = (field, value) => {
+                setMeta(prev => ({ ...prev, [field]: value }));
+            };
+
+            const handleItemChange = (catId, itemId, field, value) => {
+                setCategories(categories.map(cat => {
+                    if (cat.id === catId) {
+                        return {
+                            ...cat,
+                            items: cat.items.map(item => 
+                                item.id === itemId ? { ...item, [field]: value } : item
+                            )
+                        };
+                    }
+                    return cat;
+                }));
+            };
+
+            const addItem = (catId, itemName) => {
+                if (!itemName.trim()) return;
+                const newItem = {
+                    id: `item-${Date.now()}`,
+                    name: itemName.trim(),
+                    left: '', need: '', note: '', bought: false
+                };
+                setCategories(categories.map(cat => 
+                    cat.id === catId ? { ...cat, items: [...cat.items, newItem] } : cat
+                ));
+            };
+
+            const deleteItem = (catId, itemId) => {
+                setCategories(categories.map(cat => 
+                    cat.id === catId ? { ...cat, items: cat.items.filter(i => i.id !== itemId) } : cat
+                ));
+            };
+
+            const resetChecklist = () => {
+                if(window.confirm('ต้องการล้างข้อมูลการซื้อของเพื่อเริ่มวันใหม่หรือไม่? (รายการสิ่งของจะยังอยู่ แต่จำนวนติ๊กจะหายไป)')) {
+                    setCategories(categories.map(cat => ({
+                        ...cat,
+                        items: cat.items.map(item => ({ ...item, left: '', need: '', note: '', bought: false }))
+                    })));
+                    setMeta(prev => ({ ...prev, totalCost: '', shopName: '', payerName: '', change: '' }));
+                }
+            };
+
+            // --- Components ---
+            const CategorySection = ({ category }) => {
+                const [newItemName, setNewItemName] = React.useState("");
+
+                const onSubmit = (e) => {
+                    e.preventDefault();
+                    addItem(category.id, newItemName);
+                    setNewItemName("");
+                };
+
+                return (
+                    <div className={`mb-6 rounded-2xl overflow-hidden border-2 shadow-sm ${category.theme.split(' ')[1]} bg-white`}>
+                        {/* Header */}
+                        <div className={`px-4 py-3 flex items-center gap-2 ${category.headerTheme}`}>
+                            <span className="text-2xl">{category.icon}</span>
+                            <h2 className="text-xl font-bold tracking-wide">{category.name}</h2>
+                        </div>
+
+                        {/* Table Headers (Desktop) */}
+                        <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50 border-b border-slate-200 text-sm font-semibold text-slate-600 text-center">
+                            <div className="col-span-1 text-left">สถานะ</div>
+                            <div className="col-span-3 text-left">รายการ</div>
+                            <div className="col-span-2">เหลืออยู่</div>
+                            <div className="col-span-2">ต้องซื้อเพิ่ม</div>
+                            <div className="col-span-3">หมายเหตุ</div>
+                            <div className="col-span-1">ลบ</div>
+                        </div>
+
+                        {/* Items */}
+                        <div className="divide-y divide-slate-100">
+                            {category.items.map((item, index) => (
+                                <div key={item.id} className={`p-3 md:p-4 md:grid md:grid-cols-12 md:gap-4 md:items-center transition-colors ${item.bought ? 'bg-slate-50 opacity-70' : ''}`}>
+                                    
+                                    {/* Mobile: Top Row (Checkbox + Name + Delete) */}
+                                    <div className="flex items-center justify-between md:col-span-4 mb-2 md:mb-0">
+                                        <div className="flex items-center gap-3">
+                                            {/* Custom Checkbox */}
+                                            <button 
+                                                onClick={() => handleItemChange(category.id, item.id, 'bought', !item.bought)}
+                                                className={`w-7 h-7 md:w-6 md:h-6 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
+                                                    item.bought ? 'bg-green-500 border-green-500' : 'bg-white border-slate-300'
+                                                }`}
+                                            >
+                                                <CheckIcon checked={item.bought} />
+                                            </button>
+                                            
+                                            <span className={`text-base font-medium ${item.bought ? 'line-through text-slate-500' : 'text-slate-800'}`}>
+                                                <span className="md:hidden text-slate-400 mr-1">{index + 1}.</span>
+                                                {item.name}
+                                            </span>
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={() => deleteItem(category.id, item.id)}
+                                            className="md:hidden text-slate-300 hover:text-red-500 p-1"
+                                        >
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
+
+                                    {/* Mobile: Inputs Row / Desktop: Grid cols */}
+                                    <div className="grid grid-cols-3 gap-2 md:col-span-7">
+                                        <div>
+                                            <label className="text-[10px] text-slate-400 md:hidden block mb-1">เหลืออยู่</label>
+                                            <input 
+                                                type="text" 
+                                                value={item.left}
+                                                onChange={(e) => handleItemChange(category.id, item.id, 'left', e.target.value)}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-blue-400 focus:bg-white text-center"
+                                                placeholder="-"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-orange-500 font-medium md:hidden block mb-1">ต้องซื้อเพิ่ม</label>
+                                            <input 
+                                                type="text" 
+                                                value={item.need}
+                                                onChange={(e) => handleItemChange(category.id, item.id, 'need', e.target.value)}
+                                                className="w-full bg-orange-50 border border-orange-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white text-center font-medium text-orange-700"
+                                                placeholder="-"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-400 md:hidden block mb-1">หมายเหตุ</label>
+                                            <input 
+                                                type="text" 
+                                                value={item.note}
+                                                onChange={(e) => handleItemChange(category.id, item.id, 'note', e.target.value)}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-blue-400 focus:bg-white"
+                                                placeholder="..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Desktop Delete Button */}
+                                    <div className="hidden md:flex justify-center col-span-1">
+                                        <button 
+                                            onClick={() => deleteItem(category.id, item.id)}
+                                            className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-md transition-colors"
+                                            title="ลบรายการ"
+                                        >
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add Item Row */}
+                        <div className="p-3 bg-slate-50/50 border-t border-slate-100">
+                            <form onSubmit={onSubmit} className="flex gap-2">
+                                <input 
+                                    type="text"
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    placeholder={`+ เพิ่มรายการใน ${category.name.split(' ')[1]}`}
+                                    className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                />
+                                <button type="submit" disabled={!newItemName.trim()} className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
+                                    เพิ่ม
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen max-w-4xl mx-auto p-3 md:p-6 pb-24">
+                    
+                    {/* Header Banner */}
+                    <div className="bg-white rounded-3xl shadow-sm p-6 mb-6 text-center border-t-8 border-pink-400 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">🦆</div>
+                        <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">📋 ใบเช็คของก่อนซื้อ</h1>
+                        <p className="text-slate-500 font-medium">ร้านเป็ดย่าง / ก๋วยเตี๋ยว</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <span className="text-sm font-semibold text-slate-500 min-w-[60px]">วันที่:</span>
+                                <input type="date" value={meta.date} onChange={(e) => handleMetaChange('date', e.target.value)} className="bg-transparent w-full text-slate-700 outline-none" />
+                            </div>
+                            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <span className="text-sm font-semibold text-slate-500 min-w-[60px]">ผู้เช็คของ:</span>
+                                <input type="text" value={meta.checker} onChange={(e) => handleMetaChange('checker', e.target.value)} placeholder="ชื่อผู้เช็คสต๊อก" className="bg-transparent w-full text-slate-700 outline-none" />
+                            </div>
+                            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <span className="text-sm font-semibold text-slate-500 min-w-[60px]">ผู้ไปซื้อ:</span>
+                                <input type="text" value={meta.buyer} onChange={(e) => handleMetaChange('buyer', e.target.value)} placeholder="ชื่อคนไปตลาด" className="bg-transparent w-full text-slate-700 outline-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Notice */}
+                    <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-800 p-4 rounded-r-xl mb-6 flex justify-between items-center shadow-sm">
+                        <p className="font-semibold">💡 ของที่ใกล้หมด ห้ามรอให้หมดก่อนค่อยบอก!</p>
+                        <button onClick={resetChecklist} className="text-xs bg-white/50 hover:bg-white px-3 py-1.5 rounded-lg font-medium transition-colors border border-orange-200">
+                            🔄 ล้างข้อมูลรายวัน
+                        </button>
+                    </div>
+
+                    {/* Category Lists */}
+                    <div className="space-y-6">
+                        {categories.map(cat => (
+                            <CategorySection key={cat.id} category={cat} />
+                        ))}
+                    </div>
+
+                    {/* Bottom Summary Section */}
+                    <div className="mt-8 bg-white rounded-3xl shadow-sm border-2 border-pink-200 p-6">
+                        <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            🛒 ใบสรุปหลังซื้อของ
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <label className="w-24 text-sm font-semibold text-slate-600">ยอดซื้อทั้งหมด</label>
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <input type="text" value={meta.totalCost} onChange={(e) => handleMetaChange('totalCost', e.target.value)} className="flex-1 border-b-2 border-slate-200 focus:border-pink-400 bg-transparent px-2 py-1 outline-none text-center font-bold text-pink-600" />
+                                        <span className="text-sm text-slate-500">บาท</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <label className="w-24 text-sm font-semibold text-slate-600">ซื้อร้านค้า</label>
+                                    <input type="text" value={meta.shopName} onChange={(e) => handleMetaChange('shopName', e.target.value)} className="flex-1 border-b-2 border-slate-200 focus:border-pink-400 bg-transparent px-2 py-1 outline-none" />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <label className="w-24 text-sm font-semibold text-slate-600">คนจ่ายเงิน</label>
+                                    <input type="text" value={meta.payerName} onChange={(e) => handleMetaChange('payerName', e.target.value)} className="flex-1 border-b-2 border-slate-200 focus:border-pink-400 bg-transparent px-2 py-1 outline-none" />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <label className="w-24 text-sm font-semibold text-slate-600">เงินทอน</label>
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <input type="text" value={meta.change} onChange={(e) => handleMetaChange('change', e.target.value)} className="flex-1 border-b-2 border-slate-200 focus:border-pink-400 bg-transparent px-2 py-1 outline-none text-center font-bold text-slate-700" />
+                                        <span className="text-sm text-slate-500">บาท</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Thank you note box */}
+                            <div className="bg-pink-50 rounded-2xl p-6 flex flex-col justify-center items-center text-center border border-pink-100">
+                                <p className="text-lg font-medium text-pink-700 mb-2">ขอบคุณที่ช่วยกันดูแลร้านของเราให้น่าอยู่และขายดีทุกวันค่ะ 💖</p>
+                                <p className="text-pink-500 font-bold">i love my job ❤️</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
